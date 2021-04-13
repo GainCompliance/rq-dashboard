@@ -20,6 +20,7 @@ import os
 import re
 from functools import wraps
 from math import ceil
+import logging
 
 import arrow
 from flask import (
@@ -61,6 +62,7 @@ blueprint = Blueprint(
 @blueprint.before_app_first_request
 def setup_rq_connection():
     # we need to do It here instead of cli, since It may be embeded
+    logging.warning(current_app.config)
     upgrade_config(current_app)
     # Getting Redis connection parameters for RQ
     redis_url = current_app.config.get("RQ_DASHBOARD_REDIS_URL")
@@ -105,7 +107,7 @@ def jsonify(f):
 
 
 def serialize_queues(instance_number, queues):
-    return [
+    result = [
         dict(
             name=q.name,
             count=q.count,
@@ -156,6 +158,7 @@ def serialize_queues(instance_number, queues):
         )
         for q in queues
     ]
+    return result
 
 
 def serialize_date(dt):
@@ -181,7 +184,7 @@ def serialize_current_job(job):
         job_id=job.id,
         description=job.description,
         created_at=serialize_date(job.created_at),
-        call_string=job.get_call_string(),
+        call_string=job.description,  # doesn't work because we don't have the hyperspace code so use description
     )
 
 
